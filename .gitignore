@@ -1,0 +1,53 @@
+# Environment secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Local SQLite databases and database journals
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.sqlite-journal
+*.sqlite3-journal
+backend/travel.db
+
+# Python virtual environments
+.venv/
+venv/
+env/
+backend/venv/
+
+# Python caches and build output
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Logs and local runtime files
+*.log
+logs/
+*.pid
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Frontend dependencies/build output for future React phase
+node_modules/
+.next/
+dist/
+coverage/
+
