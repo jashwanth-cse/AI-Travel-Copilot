@@ -13,6 +13,9 @@ BACKEND_DIR: Path = Path(__file__).resolve().parents[2]
 # database.py, but this default keeps local setup friction low.
 DEFAULT_DATABASE_PATH: Path = BACKEND_DIR / "travel.db"
 
+# Local application logs. The directory is ignored by Git.
+LOG_DIR: Path = BACKEND_DIR / "logs"
+APP_LOG_PATH: Path = LOG_DIR / "app.log"
+
 # Default logging level for development; can be overridden with LOG_LEVEL.
 DEFAULT_LOG_LEVEL: str = "DEBUG"
-

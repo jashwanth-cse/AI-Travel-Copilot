@@ -7,6 +7,7 @@ Run from the backend directory with:
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 from sqlalchemy import func, select
@@ -26,15 +27,34 @@ logger = get_logger(__name__)
 
 
 def main() -> None:
-    """Run ETL for Ooty and print resulting database counts."""
+    """Run ETL for Ooty and print a Pandas ETL pipeline report."""
 
     city = "Ooty"
     service = EtlService()
+    started_at = time.perf_counter()
     result = service.run_for_city(city)
-    print(result.model_dump())
+    execution_time = time.perf_counter() - started_at
+    report = service.last_report
+
+    print("=================================")
+    print("ETL PIPELINE REPORT")
+    print("=================================")
+    print(f"City: {city}")
+    print(f"Raw Attractions: {report.raw_attractions}")
+    print(f"Cleaned Attractions: {report.cleaned_attractions}")
+    print(f"Inserted Attractions: {report.inserted_attractions}")
+    print(f"Raw Restaurants: {report.raw_restaurants}")
+    print(f"Cleaned Restaurants: {report.cleaned_restaurants}")
+    print(f"Inserted Restaurants: {report.inserted_restaurants}")
+    print(f"Raw Weather: {report.raw_weather}")
+    print(f"Cleaned Weather: {report.cleaned_weather}")
+    print(f"Inserted Weather: {report.inserted_weather}")
+    print(f"Execution Time: {execution_time:.2f} seconds")
+    print("=================================")
 
     if not result.success:
         logger.warning("ETL script completed unsuccessfully message=%s", result.message)
+        print(result.model_dump())
         return
 
     with SessionLocal() as session:

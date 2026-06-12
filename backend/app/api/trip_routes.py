@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db_session
 from app.schemas.request_schema import TripGenerateRequest
-from app.schemas.response_schema import TripGenerateResponse
+from app.schemas.response_schema import StandardApiResponse, TripGenerateResponse
 from app.services.ai_service import AiService
-from app.services.etl_service import EtlService
+from app.services.etl_service import refresh_city_data
 from app.services.recommendation_service import RecommendationService
 from app.utils.logger import get_logger
 
@@ -20,14 +20,14 @@ router = APIRouter(prefix="/api/trips", tags=["trips"])
 
 @router.post(
     "/generate",
-    response_model=TripGenerateResponse,
+    response_model=StandardApiResponse,
     status_code=status.HTTP_200_OK,
     summary="Generate a recommended AI itinerary",
 )
 def generate_trip(
     request: TripGenerateRequest,
     db_session: Session = Depends(get_db_session),
-) -> TripGenerateResponse:
+) -> StandardApiResponse:
     """Generate recommendations and an AI itinerary for a trip request."""
 
     trip = request.to_service_model()
@@ -36,7 +36,7 @@ def generate_trip(
     # ETL is best-effort at API time: if external travel APIs fail, we still try
     # to use whatever cleaned data is already in SQLite. The service logs the
     # exact provider failure and keeps route code free of ETL rules.
-    etl_result = EtlService().run_for_city(trip.destination)
+    etl_result = refresh_city_data(trip.destination)
     if not etl_result.success:
         logger.warning("ETL did not refresh data destination=%s message=%s", trip.destination, etl_result.message)
 
@@ -56,7 +56,7 @@ def generate_trip(
             detail=ai_result.message,
         )
 
-    return TripGenerateResponse(
+    trip_data = TripGenerateResponse(
         trip_id=ai_result.trip_id,
         itinerary_id=ai_result.itinerary_id,
         destination=trip.destination,
@@ -65,4 +65,9 @@ def generate_trip(
         weather=recommendation_result.weather,
         itinerary=ai_result.generated_plan,
         message=ai_result.message,
+    )
+    return StandardApiResponse(
+        success=True,
+        message="Trip generated successfully",
+        data=trip_data.model_dump(),
     )

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Float, Integer, String, Text, UniqueConstraint
+from datetime import datetime
+
+from sqlalchemy import DateTime, Float, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.database import Base
@@ -25,4 +27,14 @@ class Attraction(Base):
     category: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     city: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
-
+    created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=True,
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=True,
+    )

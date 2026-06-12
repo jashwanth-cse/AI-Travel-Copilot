@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db_session
 from app.schemas.response_schema import HealthResponse
+from app.utils.config import get_env_value
 from app.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -35,4 +36,17 @@ def health_check(db_session: Session = Depends(get_db_session)) -> HealthRespons
         ) from error
 
     logger.debug("Health check database probe passed")
-    return HealthResponse(status="ok", database="ok")
+    groq_status = "configured" if get_env_value("GROQ_API_KEY") else "missing"
+    health_data = {
+        "status": "healthy",
+        "database": "connected",
+        "groq": groq_status,
+        "cache": "enabled",
+        "version": "1.0.0",
+    }
+    return HealthResponse(
+        **health_data,
+        success=True,
+        message="Health check passed",
+        data=health_data,
+    )

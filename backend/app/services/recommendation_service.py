@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -60,6 +62,7 @@ class RecommendationService:
     ) -> RecommendationResult:
         """Return ranked attractions, restaurants, and weather for a trip."""
 
+        started_at = time.perf_counter()
         logger.info(
             "Generating recommendations destination=%s days=%s budget=%s travelers=%s",
             trip.destination,
@@ -84,6 +87,8 @@ class RecommendationService:
                     weather = self._fetch_weather(session=session, city=trip.destination, days=trip.days)
         except Exception as error:
             logger.error("Recommendation query failed destination=%s error=%s", trip.destination, error)
+            elapsed = time.perf_counter() - started_at
+            logger.info("Recommendation generation completed in %.2f seconds", elapsed)
             return RecommendationResult(
                 trip=trip,
                 success=False,
@@ -115,12 +120,15 @@ class RecommendationService:
             len(weather),
         )
 
-        return RecommendationResult(
+        result = RecommendationResult(
             trip=trip,
             attractions=ranked_attractions[:max_attractions],
             restaurants=ranked_restaurants[:max_restaurants],
             weather=weather,
         )
+        elapsed = time.perf_counter() - started_at
+        logger.info("Recommendation generation completed in %.2f seconds", elapsed)
+        return result
 
     def _fetch_attractions(self, *, session: Session, city: str) -> list[Attraction]:
         """Fetch city-matched attractions, falling back to all data if needed."""

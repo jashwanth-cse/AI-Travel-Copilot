@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -14,12 +15,29 @@ class HealthResponse(BaseModel):
 
     status: str
     database: str
+    groq: str = "unknown"
+    cache: str = "enabled"
+    version: str = "1.0.0"
+    success: bool = True
+    message: str = "Health check passed"
+    data: dict[str, Any] | None = None
 
 
 class ErrorResponse(BaseModel):
     """Standard API error payload."""
 
-    detail: str
+    success: bool = False
+    message: str
+    error: str
+
+
+class StandardApiResponse(BaseModel):
+    """Standard successful API response envelope."""
+
+    success: bool = True
+    message: str
+    data: dict[str, Any] | list[Any] | None = None
+    error: str | None = None
 
 
 class TripGenerateResponse(BaseModel):

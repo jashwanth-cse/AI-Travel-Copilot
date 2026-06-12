@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 import httpx
@@ -145,15 +146,20 @@ class AiService:
     ) -> AiItineraryResult:
         """Generate a Groq itinerary, then store trip and itinerary in SQLite."""
 
+        started_at = time.perf_counter()
         logger.info("Starting itinerary generation destination=%s days=%s", trip.destination, trip.days)
         recommendations = self.recommendation_service.recommend(trip, db_session=db_session)
         if not recommendations.success:
             logger.error("Itinerary generation stopped recommendation_message=%s", recommendations.message)
+            elapsed = time.perf_counter() - started_at
+            logger.info("AI generation completed in %.2f seconds", elapsed)
             return AiItineraryResult(success=False, message=recommendations.message)
 
         prompt = self.prompt_builder.build(recommendations)
         generated_plan = self._call_groq(prompt)
         if generated_plan is None:
+            elapsed = time.perf_counter() - started_at
+            logger.info("AI generation completed in %.2f seconds", elapsed)
             return AiItineraryResult(success=False, message="Groq itinerary generation failed")
 
         try:
@@ -164,14 +170,19 @@ class AiService:
             )
         except Exception as error:
             logger.error("Failed to store generated itinerary error=%s", error)
+            elapsed = time.perf_counter() - started_at
+            logger.info("AI generation completed in %.2f seconds", elapsed)
             return AiItineraryResult(success=False, message="Failed to store itinerary")
 
         logger.info("Itinerary generated and stored trip_id=%s itinerary_id=%s", trip_id, itinerary_id)
-        return AiItineraryResult(
+        result = AiItineraryResult(
             trip_id=trip_id,
             itinerary_id=itinerary_id,
             generated_plan=generated_plan,
         )
+        elapsed = time.perf_counter() - started_at
+        logger.info("AI generation completed in %.2f seconds", elapsed)
+        return result
 
     def build_prompt_preview(
         self,
